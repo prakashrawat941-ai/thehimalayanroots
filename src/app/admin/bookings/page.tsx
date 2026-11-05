@@ -19,10 +19,9 @@ const NEXT_BOOKING_STATUSES: Record<string, readonly string[]> = {
 interface Row { id: string; listing_kind: string; listing_title: string; start_date: string; guests: number; total_inr: number; status: string; notes: string | null }
 interface Cab { id: string; pickup_address: string; drop_address: string; pickup_at: string; passengers: number; vehicle: string; status: string; notes: string | null }
 
-function StatusForm({ action, id, status, allowedNext }: {
+function StatusForm({ action, id, allowedNext }: {
   action: (fd: FormData) => Promise<void>;
   id: string;
-  status: string;
   allowedNext: readonly string[];
 }) {
   if (!allowedNext.length) return <span className="text-xs text-forest-700">Final status</span>;
@@ -62,7 +61,7 @@ export default async function BookingsAdmin({ searchParams }: { searchParams: Pr
           <tr key={r.id} className="align-top">
             <td className="p-3"><p className="font-medium text-forest-900">{r.listing_title}</p><p className="text-xs capitalize text-forest-700">{r.listing_kind}</p>{r.notes && <p className="mt-1 max-w-xs text-xs text-forest-800/70">{r.notes}</p>}</td>
             <td className="p-3">{formatDate(r.start_date)}</td><td className="p-3">{r.guests}</td><td className="p-3">{inr(r.total_inr)}</td>
-            <td className="p-3"><StatusBadge status={r.status} /></td><td className="p-3"><StatusForm action={updateBookingStatus} id={r.id} status={r.status} allowedNext={NEXT_BOOKING_STATUSES[r.status] ?? []} /></td>
+            <td className="p-3"><StatusBadge status={r.status} /></td><td className="p-3"><StatusForm action={updateBookingStatus} id={r.id} allowedNext={NEXT_BOOKING_STATUSES[r.status] ?? []} /></td>
           </tr>
         ))}
       </Table>
@@ -73,7 +72,7 @@ export default async function BookingsAdmin({ searchParams }: { searchParams: Pr
             <td className="max-w-sm p-3"><p className="text-forest-900">{c.pickup_address}</p><p className="text-xs text-forest-700">→ {c.drop_address}</p>{c.notes && <p className="mt-1 text-xs text-forest-800/70">{c.notes}</p>}</td>
             <td className="p-3 whitespace-nowrap">{new Date(c.pickup_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" })}</td>
             <td className="p-3 capitalize">{c.passengers} · {c.vehicle}</td>
-            <td className="p-3"><StatusBadge status={c.status} /></td><td className="p-3"><StatusForm action={updateCabStatus} id={c.id} status={c.status} allowedNext={STATUSES} /></td>
+            <td className="p-3"><StatusBadge status={c.status} /></td><td className="p-3"><StatusForm action={updateCabStatus} id={c.id} allowedNext={STATUSES} /></td>
           </tr>
         ))}
       </Table>
