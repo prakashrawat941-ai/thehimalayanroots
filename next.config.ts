@@ -22,7 +22,7 @@ const nextConfig: NextConfig = {
   trailingSlash: true,
   poweredByHeader: false,
   reactStrictMode: true,
-  ...(isGitHubPages ? {} : { serverActions: { bodySizeLimit: "10mb" } }),
+  ...(isGitHubPages ? {} : { serverActions: { bodySizeLimit: "110mb" } }),
   images: {
     unoptimized: isGitHubPages,
     remotePatterns: [
