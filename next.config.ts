@@ -6,6 +6,14 @@ import type { NextConfig } from "next";
 const isGitHubPages = process.env.GITHUB_PAGES === "true";
 const basePath = isGitHubPages ? "/thehimalayanroots" : "";
 
+const securityHeaders = [
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "X-Frame-Options", value: "DENY" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(self)" },
+  { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+];
+
 const supabaseHost = (() => {
   try {
     return new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").hostname;
@@ -29,6 +37,15 @@ const nextConfig: NextConfig = {
         : []),
     ],
   },
+  // GitHub Pages does not support response-header configuration. Preserve
+  // headers for local/other server builds while static hosting is prepared.
+  ...(!isGitHubPages
+    ? {
+        async headers() {
+          return [{ source: "/(.*)", headers: securityHeaders }];
+        },
+      }
+    : {}),
 };
 
 export default nextConfig;
