@@ -1,8 +1,6 @@
 import type { NextConfig } from "next";
 
 // GitHub Pages project sites are hosted below /<repository>.
-// Keep local development and the existing server-rendered build unchanged
-// until the server-action/API-route migration is complete.
 const isGitHubPages = process.env.GITHUB_PAGES === "true";
 const basePath = isGitHubPages ? "/thehimalayanroots" : "";
 
@@ -15,37 +13,24 @@ const securityHeaders = [
 ];
 
 const supabaseHost = (() => {
-  try {
-    return new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").hostname;
-  } catch {
-    return null;
-  }
+  try { return new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").hostname; }
+  catch { return null; }
 })();
 
 const nextConfig: NextConfig = {
   ...(basePath ? { basePath } : {}),
+  ...(isGitHubPages ? { output: "export" as const } : {}),
   trailingSlash: true,
   poweredByHeader: false,
   reactStrictMode: true,
-  // GitHub Pages cannot run Next's image optimization server.
   images: {
     unoptimized: true,
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
-      ...(supabaseHost
-        ? [{ protocol: "https" as const, hostname: supabaseHost, pathname: "/storage/v1/object/public/**" }]
-        : []),
+      ...(supabaseHost ? [{ protocol: "https" as const, hostname: supabaseHost, pathname: "/storage/v1/object/public/**" }] : []),
     ],
   },
-  // GitHub Pages does not support response-header configuration. Preserve
-  // headers for local/other server builds while static hosting is prepared.
-  ...(!isGitHubPages
-    ? {
-        async headers() {
-          return [{ source: "/(.*)", headers: securityHeaders }];
-        },
-      }
-    : {}),
+  ...(!isGitHubPages ? { async headers() { return [{ source: "/(.*)", headers: securityHeaders }]; } } : {}),
 };
 
 export default nextConfig;
