@@ -88,6 +88,7 @@ Build-time public values only:
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY` or preferably the current publishable key
 - `NEXT_PUBLIC_SITE_URL`
+- `NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY` (optional; use a referrer-restricted browser key, separate from the server-side Google key)
 
 No service-role/secret key, Google server API key, or GitHub PAT belongs in GitHub Pages build output or browser variables.
 
@@ -116,7 +117,7 @@ Supabase dashboard:
 - [x] Repository and key runtime dependencies inventoried.
 - [x] Initial `next.config.ts` preparation committed on this branch: repository base path is conditional on `GITHUB_PAGES=true`, trailing slashes are enabled, and Next image optimization is disabled for static hosting.
 - [x] Existing response security headers are preserved for non-Pages server builds; Pages-specific header controls must be implemented at the hosting/DNS layer where supported.
-- [ ] Enable `output: "export"` only after server-dependent features and dynamic routes have been migrated.
+- [ ] Enable `output: "export"` only after server-dependent features and dynamic routes have been migrated. The current application still has Server Actions, API routes, dynamic rendering and non-static slug routes; a regular Next.js build passing is not proof of static-export readiness.
 - [x] Supabase project and current public tables inspected read-only.
 - [x] Existing data preservation requirement recorded.
 - [ ] Full RLS/grant/function/Storage policy review for browser-side migration.
