@@ -4,10 +4,9 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { getSessionUser, requireAdmin } from "@/lib/auth";
-import { isBookable } from "@/lib/data/listings";
-import { getListing, getListings } from "@/lib/cms/queries";
+import { getListings } from "@/lib/cms/queries";
 import { buildItinerary, toPlannerListing } from "@/lib/planner";
-import { bookingSchema, bookingStatusSchema, nightsBetween, todayISO, tripPlanSchema } from "@/lib/validation";
+import { bookingSchema, bookingStatusSchema, todayISO, tripPlanSchema } from "@/lib/validation";
 import type { FormState } from "./auth";
 
 export async function createBooking(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -29,30 +28,21 @@ export async function createBooking(_prev: FormState, formData: FormData): Promi
 
   if (input.startDate < todayISO()) return { fieldErrors: { startDate: ["Choose a future date"] } };
 
-  const listing = await getListing(input.kind, input.slug);
-  if (!listing || !isBookable(listing.kind)) return { error: "That listing is not available." };
-
-  const capacity = listing.homestay?.maxGuests;
-  if (capacity && input.guests > capacity) return { fieldErrors: { guests: [`Maximum ${capacity} guests`] } };
-
-  // Price is always computed on the server from the catalogue; client values are ignored.
-  const total = listing.priceUnit === "night"
-    ? listing.price * nightsBetween(input.startDate, input.endDate)
-    : listing.price * input.guests;
-
+  // PostgreSQL loads the published listing and calculates the authoritative price.
+  // The browser cannot forge listing metadata or total_inr through the public REST API.
   const supabase = await createClient();
-  const { error } = await supabase.from("bookings").insert({
-    user_id: user.id,
-    listing_kind: listing.kind,
-    listing_slug: listing.slug,
-    listing_title: listing.title,
-    start_date: input.startDate,
-    end_date: input.endDate,
-    guests: input.guests,
-    total_inr: total,
-    notes: input.notes || null,
+  const { error } = await supabase.rpc("create_booking", {
+    p_listing_kind: input.kind,
+    p_listing_slug: input.slug,
+    p_start_date: input.startDate,
+    p_end_date: input.endDate,
+    p_guests: input.guests,
+    p_notes: input.notes || null,
   });
-  if (error) return { error: "We couldn't save your booking. Please try again." };
+  if (error) {
+    console.error("[booking] create failed:", error.message);
+    return { error: "We couldn't save your booking. Please check the dates and guest count, then try again." };
+  }
 
   revalidatePath("/dashboard");
   revalidatePath("/admin");
@@ -66,7 +56,7 @@ export async function cancelBooking(formData: FormData): Promise<void> {
   const parsed = bookingStatusSchema.safeParse({ id, status: "cancelled" });
   if (!parsed.success) return;
   const supabase = await createClient();
-  // RLS and the guard trigger restrict this to the user's own active bookings.
+  // RLS and the database trigger restrict this to the user's own active bookings.
   await supabase.from("bookings").update({ status: "cancelled" }).eq("id", parsed.data.id).eq("user_id", user.id);
   revalidatePath("/dashboard");
   revalidatePath("/admin");
@@ -77,7 +67,8 @@ export async function updateBookingStatus(formData: FormData): Promise<void> {
   const parsed = bookingStatusSchema.safeParse({ id: formData.get("id"), status: formData.get("status") });
   if (!parsed.success) return;
   const supabase = await createClient();
-  await supabase.from("bookings").update({ status: parsed.data.status }).eq("id", parsed.data.id);
+  const { error } = await supabase.from("bookings").update({ status: parsed.data.status }).eq("id", parsed.data.id);
+  if (error) console.error("[booking] status update failed:", error.message);
   revalidatePath("/admin");
   revalidatePath("/dashboard");
 }
