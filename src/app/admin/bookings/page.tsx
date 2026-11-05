@@ -19,16 +19,17 @@ const NEXT_BOOKING_STATUSES: Record<string, readonly string[]> = {
 interface Row { id: string; listing_kind: string; listing_title: string; start_date: string; guests: number; total_inr: number; status: string; notes: string | null }
 interface Cab { id: string; pickup_address: string; drop_address: string; pickup_at: string; passengers: number; vehicle: string; status: string; notes: string | null }
 
-function StatusForm({ action, id, allowedNext }: {
+function StatusForm({ action, id, allowedNext, defaultStatus }: {
   action: (fd: FormData) => Promise<void>;
   id: string;
   allowedNext: readonly string[];
+  defaultStatus?: string;
 }) {
   if (!allowedNext.length) return <span className="text-xs text-forest-700">Final status</span>;
   return (
     <form action={action} className="flex gap-2">
       <input type="hidden" name="id" value={id} />
-      <select name="status" defaultValue={allowedNext[0]} aria-label="New status" className="rounded-lg border border-ivory-300 px-2 py-1.5 text-sm capitalize">
+      <select name="status" defaultValue={defaultStatus ?? allowedNext[0]} aria-label="New status" className="rounded-lg border border-ivory-300 px-2 py-1.5 text-sm capitalize">
         {allowedNext.map((s) => <option key={s} value={s}>{s}</option>)}
       </select>
       <button className="rounded-lg bg-forest-800 px-3 py-1.5 text-xs text-ivory-50">Save</button>
@@ -72,7 +73,7 @@ export default async function BookingsAdmin({ searchParams }: { searchParams: Pr
             <td className="max-w-sm p-3"><p className="text-forest-900">{c.pickup_address}</p><p className="text-xs text-forest-700">→ {c.drop_address}</p>{c.notes && <p className="mt-1 text-xs text-forest-800/70">{c.notes}</p>}</td>
             <td className="p-3 whitespace-nowrap">{new Date(c.pickup_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" })}</td>
             <td className="p-3 capitalize">{c.passengers} · {c.vehicle}</td>
-            <td className="p-3"><StatusBadge status={c.status} /></td><td className="p-3"><StatusForm action={updateCabStatus} id={c.id} allowedNext={STATUSES} /></td>
+            <td className="p-3"><StatusBadge status={c.status} /></td><td className="p-3"><StatusForm action={updateCabStatus} id={c.id} allowedNext={STATUSES} defaultStatus={c.status} /></td>
           </tr>
         ))}
       </Table>
