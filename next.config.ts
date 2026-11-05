@@ -19,12 +19,12 @@ const supabaseHost = (() => {
 
 const nextConfig: NextConfig = {
   ...(basePath ? { basePath } : {}),
-  ...(isGitHubPages ? { output: "export" as const } : {}),
   trailingSlash: true,
   poweredByHeader: false,
   reactStrictMode: true,
+  ...(isGitHubPages ? {} : { serverActions: { bodySizeLimit: "10mb" } }),
   images: {
-    unoptimized: true,
+    unoptimized: isGitHubPages,
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
       ...(supabaseHost ? [{ protocol: "https" as const, hostname: supabaseHost, pathname: "/storage/v1/object/public/**" }] : []),
