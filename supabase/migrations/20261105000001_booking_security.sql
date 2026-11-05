@@ -23,6 +23,7 @@ declare
   v_total numeric;
   v_nights integer;
   v_max_guests integer;
+  v_capacity_text text;
   v_booking_id uuid;
 begin
   if v_user_id is null then
@@ -61,12 +62,17 @@ begin
     raise exception 'Listing is not available for booking' using errcode = 'P0002';
   end if;
 
-  if p_listing_kind = 'homestays' then
-    if (v_listing.details #>> '{homestay,maxGuests}') ~ '^[0-9]+$' then
-      v_max_guests := (v_listing.details #>> '{homestay,maxGuests}')::integer;
-      if v_max_guests > 0 and p_guests > v_max_guests then
-        raise exception 'Guest count exceeds the homestay capacity' using errcode = '22023';
-      end if;
+  -- Enforce capacity for every listing carrying homestay capacity metadata,
+  -- including workation listings that embed homestay details.
+  v_capacity_text := v_listing.details #>> '{homestay,maxGuests}';
+  if v_capacity_text is not null then
+    if v_capacity_text !~ '^[0-9]+$' then
+      raise exception 'Listing capacity metadata is invalid' using errcode = '22023';
+    end if;
+
+    v_max_guests := v_capacity_text::integer;
+    if v_max_guests < 1 or p_guests > v_max_guests then
+      raise exception 'Guest count exceeds the listing capacity' using errcode = '22023';
     end if;
   end if;
 
