@@ -1,6 +1,6 @@
 # GitHub Pages + Supabase migration plan
 
-**Target:** GitHub Pages hosts the static frontend. The existing Supabase project remains the backend. Vercel is explicitly out of scope.
+**Target:** `https://prakashrawat941-ai.github.io/thehimalayanroots/` (confirmed). GitHub Pages hosts the static frontend. The existing Supabase project remains the backend. Vercel is explicitly out of scope.
 
 **Repository baseline audited:** `main` at `f1ae555c106a1ad42419a519aeac9ecd14881c88`.
 
@@ -112,7 +112,11 @@ Supabase dashboard:
 
 ## Current status
 
+- [x] Default GitHub Pages URL confirmed: `https://prakashrawat941-ai.github.io/thehimalayanroots/`.
 - [x] Repository and key runtime dependencies inventoried.
+- [x] Initial `next.config.ts` preparation committed on this branch: repository base path is conditional on `GITHUB_PAGES=true`, trailing slashes are enabled, and Next image optimization is disabled for static hosting.
+- [x] Existing response security headers are preserved for non-Pages server builds; Pages-specific header controls must be implemented at the hosting/DNS layer where supported.
+- [ ] Enable `output: "export"` only after server-dependent features and dynamic routes have been migrated.
 - [x] Supabase project and current public tables inspected read-only.
 - [x] Existing data preservation requirement recorded.
 - [ ] Full RLS/grant/function/Storage policy review for browser-side migration.
