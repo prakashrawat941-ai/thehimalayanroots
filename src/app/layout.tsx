@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Inter } from "next/font/google";
 import { Header } from "@/components/Header";
+import { PWARegister } from "@/components/PWARegister";
 import { Footer } from "@/components/Footer";
 import { siteUrl } from "@/lib/supabase/config";
 import { getSettings } from "@/lib/cms/queries";
@@ -16,6 +17,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const s = await getSettings();
   return {
     metadataBase: new URL(siteUrl),
+    manifest: "/manifest.json",
+    appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Himalayan Roots" },
     title: { default: s.tagline ? `${s.siteName} · ${s.tagline}` : s.siteName, template: `%s · ${s.siteName}` },
     description: s.description || undefined,
     openGraph: { type: "website", siteName: s.siteName },
@@ -32,6 +35,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en" className={`${inter.variable} ${cormorant.variable} ${cormorantItalic.variable}`}>
       <body>
+        <PWARegister />
         {vars && <style>{`:root{${vars}}`}</style>}
         <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-ivory-50 focus:px-4 focus:py-2">Skip to content</a>
         <Header />
